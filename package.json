@@ -1,8 +1,9 @@
 {
-  "name": "quiz-2020",
+  "name": "quiz-examen-2020",
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "preinstall": "node tests/generation.js",
     "start": "node ./bin/www",
     "super": "supervisor ./bin/www",
     "test": "NODE_ENV=testing mocha -R spec",
@@ -39,5 +40,11 @@
   "devDependencies": {
     "mocha": "^7.1.0",
     "zombie": "^6.1.4"
+  },
+  "info": {
+    "githubURL": "CORE-UPM/Entrega_examen",
+    "serverUrl": "https://autocorector.dit.upm.es/",
+    "courseId": "8249",
+    "assignmentId": "83669"
   }
 }
