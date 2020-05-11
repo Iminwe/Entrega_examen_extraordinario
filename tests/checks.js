@@ -16,6 +16,8 @@ const WAIT =  typeof process.env.WAIT !== "undefined"?parseInt(process.env.WAIT)
 const TIMEOUT =  typeof process.env.TIMEOUT !== "undefined"?parseInt(process.env.TIMEOUT):2000;
 const TEST_PORT =  typeof process.env.TEST_PORT !== "undefined"?parseInt(process.env.TEST_PORT):3001;
 
+const SEQUELIZE_CMD =  typeof process.env.SEQUELIZE_CMD !== "undefined"?process.env.SEQUELIZE_CMD:"npx sequelize";
+
 const FILTER = new RegExp(process.env.TESTFILTER, "i");
 
 
@@ -548,11 +550,10 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                 err = "No hemos podido crear la base de datos";
                 fs.closeSync(fs.openSync(db_file, 'w'));
 
-                let sequelize_cmd = "npx sequelize"; //path.join(path_assignment, "node_modules", ".bin", "sequelize");
                 err = "No hemos podido lanzar las migraciones";
-                await exec(`${sequelize_cmd} db:migrate --url "sqlite://${db_file}" --migrations-path ${path.join(path_assignment, "migrations")}`);
+                await exec(`${SEQUELIZE_CMD} db:migrate --url "sqlite://${db_file}" --migrations-path ${path.join(path_assignment, "migrations")}`);
                 err = "No hemos podido lanzar las seeds";
-                await exec(`${sequelize_cmd} db:seed:all --url "sqlite://${db_file}" --seeders-path ${path.join(path_assignment, "seeders")}`);
+                await exec(`${SEQUELIZE_CMD} db:seed:all --url "sqlite://${db_file}" --seeders-path ${path.join(path_assignment, "seeders")}`);
 
                 let bin_path = path.join(path_assignment, "bin", "www");
 

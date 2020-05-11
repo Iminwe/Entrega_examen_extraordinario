@@ -16,8 +16,10 @@ const copyFile = promisify(fs.copyFile);
 
 const path_assignment = path.resolve(path.join(__dirname, ".."));
 
-const user_data = path.join(path_assignment, 'tests', "datos-usuario");
 
+function user_data() {
+    return path.join(path_assignment, 'tests', "datos-usuario");
+}
 
 Generation = {};
 
@@ -36,14 +38,14 @@ Generation.user_id = function(email) {
 };
 
 Generation.model = async function() {
-    let user_email = (await readFile(user_data)).toString('utf8').toLowerCase();
+    let user_email = (await readFile(user_data())).toString('utf8').toLowerCase();
     console.log(`El e-mail proporcionado es "${user_email}".`)
     let id = Generation.user_id(user_email);
     return Generation.models[id];
 };
 
 Generation.modelSync = function() {
-    let user_email = fs.readFileSync(user_data).toString('utf8').toLowerCase();
+    let user_email = fs.readFileSync(user_data()).toString('utf8').toLowerCase();
     let id = Generation.user_id(user_email);
     return Generation.models[id];
 };
@@ -52,11 +54,16 @@ Generation.modelSync = function() {
 Generation.generate = async function(email) {
     const id = Generation.user_id(email);
     console.log(id);
-    await writeFile(user_data, email);
+    await writeFile(user_data(), email);
     let model = await Generation.model();
 
-    await copyFile(path.join(path_assignment, 'tests', `${ model.name }.md`),
+    try{
+    await copyFile(path.join(path_assignment, 'tests', `${ model }.md`),
                    path.join(path_assignment, 'Enunciado.md'));
+    }catch(e){
+        throw Error("No se pudo copiar el enunciado. La causa:");
+        console.log(e);
+    }
     return Generation.models[id];
 };
 
