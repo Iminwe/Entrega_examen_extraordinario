@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "preinstall": "node tests/generation.js",
+    "generate": "node tests/generation.js --force",
     "start": "node ./bin/www",
     "super": "supervisor ./bin/www",
     "test": "NODE_ENV=testing mocha -R spec",

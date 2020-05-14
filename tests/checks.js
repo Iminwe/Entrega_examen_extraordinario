@@ -64,7 +64,7 @@ const questions = [
 const modelo = function() {
     if (typeof process.env.MODEL !== "undefined") {
         let model = process.env.MODEL;
-        if(generation.models.includes(model)){
+        if(generation.enunciados[model] !== 'undefined'){
             return model;
         }
         throw Error(`Modelo de examen desconocido: ${model}`);
@@ -72,7 +72,6 @@ const modelo = function() {
         return generation.modelSync();
     }
 }();
-
 
 // TODO: Integrar bien con un logger
 function log() {
