@@ -65,25 +65,29 @@ Generation.modelSync = function() {
 };
 
 
-Generation.prepare = async function(email) {
-    const model = Generation.model_for_user(email);
+Generation.prepare = function(email) {
+    let model;
+    if(email) {
+        model = Generation.model_for_user(email);
+    } else {
+        model = Generation.modelSync();
+    }
 
     // Ahora usamos user.json, así que este paso no es necesario
     // await writeFile(user_data(), email);
 
     fs.writeFileSync(path.join(path_assignment, 'Enunciado.pdf'), enunciados[model]);
 
-    return ;
+    return model;
 };
 
 Generation.main = async function(myArgs){
     if((myArgs.length < 1) || (myArgs[0] != '--force')) {
         try{
-            Generation.model();
-            return;
+            return Generation.model();
         }catch(e) {};
     } 
-    Generation.generate();
+    return Generation.generate();
 }
 
 Generation.generate = async function() {

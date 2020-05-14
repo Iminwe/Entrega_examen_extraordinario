@@ -69,7 +69,7 @@ const modelo = function() {
         }
         throw Error(`Modelo de examen desconocido: ${model}`);
     }else {
-        return generation.modelSync();
+        return generation.prepare();
     }
 }();
 
