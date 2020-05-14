@@ -81,30 +81,4 @@ Generation.prepare = function(email) {
     return model;
 };
 
-Generation.main = async function(myArgs){
-    if((myArgs.length < 1) || (myArgs[0] != '--force')) {
-        try{
-            return Generation.model();
-        }catch(e) {};
-    } 
-    return Generation.generate();
-}
-
-Generation.generate = async function() {
-    const readline = require('readline').createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-    // TODO: comprobar que sea @upm.es
-    const email = await new Promise((resolve, reject) => {
-        readline.question('¿Cuál es tu dirección de e-mail (@alumnos.upm.es)? ', email => resolve(email.toLowerCase()))
-    });
-    readline.close();
-    return Generation.prepare(email);
-};
-
-if (require.main === module) {
-    Generation.main(process.argv.slice(2));
-}
-
 module.exports = Generation;

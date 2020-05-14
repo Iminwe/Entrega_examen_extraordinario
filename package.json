@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "generate": "node tests/generation.js --force",
     "start": "node ./bin/www",
     "super": "supervisor ./bin/www",
     "test": "NODE_ENV=testing mocha -R spec",
