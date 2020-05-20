@@ -591,11 +591,13 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
             await browser.deleteCookies();
         });
 
-        soloPara(["Modelo-1"], function() {
+        soloPara(["Modelo-1", "Modelo-2", "Modelo-3", "Modelo-4", "Modelo-5"], function() {
             let layoutButtonTitle = new RegExp(config.layoutButtonTitle);
             let requestPath = new RegExp(config.requestPath);
             let middlewareName = new RegExp(config.middlewareName);
             let viewTitle = new RegExp(config.viewTitle);
+
+            let incluyeLogueado = false;
 
             // comprueba(`La plantilla views/layout.ejs contiene el botón adecuado`,
             //           1,
@@ -621,24 +623,32 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
            //               comprueba_fichero(`views/quizzes/examen.ejs`, [/h1/, viewTitle]);
            //           });
 
-           // comprueba(`La página principal no incluye un enlace para ${config.middlewareName} si no estás logueado`,
-           //           1,
-           //           async function(){ 
-           //               await browser.visit("/");
-           //               browser.assert.status(200);
-           //               this.msg_err = "Se muestra enlace para el Total";
-           //               browser.assert.elements(`a[href="${config.requestPath}"]`, 0);
 
-           //           });
             comprueba(`La página principal incluye un enlace para ${config.middlewareName} si estás logueado`,
                       1,
                       async function(){ 
+                          this.mgs_err = "Error al visitar la página principal."
                           await browser.visit("/");
                           browser.assert.status(200);
                           await asUser('pepe', async function() {
-                              this.msg_err = "No se muestra enlace para el Total";
+                              this.msg_err = "No se muestra enlace";
                               browser.assert.elements(`a[href="${config.requestPath}"]`, 1);
                           });
+                          incluyeLogueado = true;
+
+                      });
+
+            comprueba(`La página principal no incluye un enlace para ${config.middlewareName} si no estás logueado`,
+                      1,
+                      async function(){ 
+                          if(!incluyeLogueado) {
+                                throw Error( "Para que este test pueda aplicarse, primero ha de mostrarse el enlace a usuarios logueados.")
+                          }
+                          this.mgs_err = "Error al visitar la página principal."
+                          await browser.visit("/");
+                          browser.assert.status(200);
+                          this.msg_err = "Se muestra enlace";
+                          browser.assert.elements(`a[href="${config.requestPath}"]`, 0);
 
                       });
             comprueba(`El middleware no deja ${config.middlewareName} a usuarios no logueados`,
@@ -664,271 +674,6 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
 
         });
 
-        soloPara(["Modelo-2"], function() {
-            // comprueba(`La plantilla views/layout.ejs contiene el botón adecuado`,
-            //           1,
-            //           async function () {
-            //               comprueba_fichero('views/layout.ejs', [/Total/, /users\/contar/]);
-            //           });
-
-
-            // comprueba("El fichero de rutas incluye la función contar",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('routes/index.js', [/users\/contar/]);
-            //           });
-
-            // comprueba("El fichero de controladores incluye la función contar",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('controllers/user.js', [/total/, /contar/, /models.User.count/]);
-            //           });
-            // comprueba("Se incluye una vista para contar",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('views/users/contar.ejs', [/h1/, /Contador/]);
-            //           });
-
-            comprueba(`La página principal no incluye un enlace para ${config.middlewareName} si no estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          this.msg_err = "Se muestra enlace.";
-                          browser.assert.elements(`a[href="${config.requestPath}"]`, 0);
-
-                      });
-            comprueba(`La página principal incluye un enlace para ${config.middlewareName} si estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          await asUser('pepe', async function() {
-                              this.msg_err = "No se muestra enlace para el Total";
-                              browser.assert.elements(`a[href="${config.requestPath}"]`, 1);
-                          });
-
-                      });
-            comprueba(`El middleware no deja ${config.middlewareName} a usuarios no logueados`,
-                      2,
-                      async function(){ 
-                          await browser.visit(config.requestPath);
-
-                          // TODO: cambiar por un assert
-                          if ((browser.status != 403) && !browser.url.includes('login')){
-                              throw Error("The URL could be accessed");
-                          };
-                      });
-
-            comprueba(`El middleware deja ${config.middlewareName} a usuarios logueados`,
-                      2,
-                      async function(){ 
-                          await asUser('pepe', async function() {
-                              await browser.visit(config.requestPath);
-                              browser.assert.status(200);
-                          });
-                      });
-
-        });
-
-        soloPara(["Modelo-3"], function() {
-            // comprueba(`La plantilla views/layout.ejs contiene el botón adecuado`,
-            //           1,
-            //           async function () {
-            //               comprueba_fichero('views/layout.ejs', [/Reset/, /quizzes\/reset/]);
-            //           });
-
-
-            // comprueba("El fichero de rutas incluye la función reset",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('routes/index.js', [/quizzes\/reset/]);
-            //           });
-
-            // comprueba("El fichero de controladores incluye la función reset",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('controllers/quiz.js', [/reset/, /models.Quiz.destroy/]);
-            //           });
-            // comprueba("Se incluye una vista para reset",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('views/quizzes/reset.ejs', [/h1/, /Borrado de Quizzes/]);
-            //           });
-
-            comprueba(`La página principal no incluye un enlace para ${config.middlewareName} si no estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          this.msg_err = "Se muestra enlace para reset";
-                          browser.assert.elements(`a[href="${config.requestPath}"]`, 0);
-
-                      });
-            comprueba(`La página principal incluye un enlace para ${config.middlewareName} si estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          await asUser('pepe', async function() {
-                              this.msg_err = "No se muestra enlace para reset";
-                              browser.assert.elements(`a[href="${config.requestPath}"]`, 1);
-                          });
-
-                      });
-            comprueba(`El middleware no deja hacer ${config.middlewareName} a usuarios no logueados`,
-                      2,
-                      async function(){ 
-                          await browser.visit(config.requestPath);
-
-                          // TODO: cambiar por un assert
-                          if ((browser.status != 403) && !browser.url.includes('login')){
-                              throw Error("The URL could be accessed");
-                          };
-                      });
-
-            comprueba(`El middleware deja hacer ${config.middlewareName} a usuarios logueados`,
-                      2,
-                      async function(){ 
-                          await asUser('pepe', async function() {
-                              await browser.visit(config.requestPath);
-                              browser.assert.status(200);
-                          });
-                      });
-
-        });
-        soloPara(["Modelo-4"], function() {
-            // comprueba(`La plantilla views/layout.ejs contiene el botón adecuado`,
-            //           1,
-            //           async function () {
-            //               comprueba_fichero('views/layout.ejs', [/NoCeros/, /quizzes\/noceros/]);
-            //           });
-
-
-            // comprueba("El fichero de rutas incluye la función noceros",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('routes/index.js', [/quizzes\/noceros/]);
-            //           });
-
-            // comprueba("El fichero de controladores incluye la función noceros",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('controllers/quiz.js', [/noceros/, /models.Quiz.destroy/]);
-            //           });
-            // comprueba("Se incluye una vista para noceros",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('views/quizzes/noceros.ejs', [/h1/, /Eliminar Ceros/]);
-            //           });
-
-            comprueba(`La página principal no incluye un enlace para ${config.middlewareName} si no estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          this.msg_err = "Se muestra enlace para noceros";
-                          browser.assert.elements(`a[href="${config.requestPath}"]`, 0);
-
-                      });
-            comprueba(`La página principal incluye un enlace para ${config.middlewareName} si estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          await asUser('pepe', async function() {
-                              this.msg_err = "No se muestra enlace para noceros";
-                              browser.assert.elements(`a[href="${config.requestPath}"]`, 1);
-                          });
-
-                      });
-            comprueba(`El middleware no deja acceder a ${config.middlewareName} a usuarios no logueados`,
-                      2,
-                      async function(){ 
-                          await browser.visit(config.requestPath);
-
-                          // TODO: cambiar por un assert
-                          if ((browser.status != 403) && !browser.url.includes('login')){
-                              throw Error("The URL could be accessed");
-                          };
-                      });
-
-            comprueba(`El middleware deja acceder a ${config.middlewareName} a usuarios logueados`,
-                      2,
-                      async function(){ 
-                          await asUser('pepe', async function() {
-                              await browser.visit(config.requestPath);
-                              browser.assert.status(200);
-                          });
-                      });
-
-        });
-        soloPara(["Modelo-5"], function() {
-            // comprueba(`La plantilla views/layout.ejs contiene el botón adecuado`,
-            //           1,
-            //           async function () {
-            //               comprueba_fichero('views/layout.ejs', [/Mios/, /quizzes\/mios/]);
-            //           });
-
-
-            // comprueba("El fichero de rutas incluye la función mios",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('routes/index.js', [/quizzes\/mios/]);
-            //           });
-
-            // comprueba("El fichero de controladores incluye la función mios",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('controllers/quiz.js', [/mios/, /models.Quiz.count/]);
-            //           });
-            // comprueba("Se incluye una vista para mios",
-            //           1,
-            //           async function() {
-            //               comprueba_fichero('views/quizzes/mios.ejs', [/h1/, /Contar mis Quizzes/i]);
-            //           });
-
-            comprueba(`La página principal no incluye un enlace para ${config.middlewareName} si no estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          this.msg_err = "Se muestra enlace para mios";
-                          browser.assert.elements(`a[href="${config.requestPath}"]`, 0);
-
-                      });
-            comprueba(`La página principal incluye un enlace para ${config.middlewareName} si estás logueado`,
-                      1,
-                      async function(){ 
-                          await browser.visit("/");
-                          browser.assert.status(200);
-                          await asUser('pepe', async function() {
-                              this.msg_err = "No se muestra enlace para mios";
-                              browser.assert.elements(`a[href="${config.requestPath}"]`, 1);
-                          });
-
-                      });
-            comprueba(`El middleware no deja acceder a ${config.middlewareName} a usuarios no logueados`,
-                      2,
-                      async function(){ 
-                          await browser.visit(config.requestPath);
-
-                          // TODO: cambiar por un assert
-                          if ((browser.status != 403) && !browser.url.includes('login')){
-                              throw Error("The URL could be accessed");
-                          };
-                      });
-
-            comprueba(`El middleware deja acceder a ${config.middlewareName} a usuarios logueados`,
-                      2,
-                      async function(){ 
-                          await asUser('pepe', async function() {
-                              await browser.visit(config.requestPath);
-                              browser.assert.status(200);
-                          });
-                      });
-
-        });
     });
 });
 
