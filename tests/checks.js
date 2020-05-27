@@ -140,19 +140,6 @@ function comprueba_fichero(fpath, present, absent) {
 
 
 describe("Tests examen", async function() {
-    after(function () {
-
-        if(!DEBUG && (error_any || error_critical)) {
-            console.log(`Algún error de Javascript ha sido suprimido. Puedes obtener más información de los errores lanzando el autocorector con la variable DEBUG. Por ejemplo:
-
-  DEBUG=1 autocorector
-
-Cuando preguntes en el foro, asegúrate de incluir esa información para que podamos ayudarte.
-`);
-        }
-    });
-
-    // Ahora mismo estos se lanzan para todos los modelos
 
     // Tests que no puntúan, pero sus fallos son CRITICAL. Es un sanity check antes de los tests de verdad.
     describe("Prechecks", function () {
@@ -230,7 +217,11 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                     await server.kill();
                     // Borrar base de datos
                     if(!DEBUG){
-                        fs.unlinkSync(db_file);
+                        try{
+                            fs.unlinkSync(db_file);
+                        }catch(e){
+                            // Ignorar el mensaje, el fichero se borra al arrancar también.
+                        }
                     }
                 }
             });

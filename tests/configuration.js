@@ -47,11 +47,10 @@ function read_models(){
 let modelos = read_models();
 
 
-const secret = 2;
-
 function model_for_user (email) {
-    var id = secret;
+    var id = 0;
     for(const ix in email){
+        id += 1;
         id += email.charCodeAt(ix);
     }
 
