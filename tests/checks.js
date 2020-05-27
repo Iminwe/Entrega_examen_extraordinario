@@ -112,8 +112,8 @@ function comprueba(msg, score, func) {
             if (critical) {
                 console.log('Se ha producido un error crítico, se cancelan el resto de tests.');
                 error_critical = this.msg_err;
-                throw(e);
             }
+            throw(e);
         }
     });
 };
