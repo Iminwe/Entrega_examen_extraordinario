@@ -16,7 +16,7 @@ const process = require("process");
 const DEBUG =  typeof process.env.DEBUG !== "undefined";
 const LOG_SERVER =  typeof process.env.LOG_SERVER !== "undefined";
 const WAIT =  typeof process.env.WAIT !== "undefined"?parseInt(process.env.WAIT):50000;
-const TIMEOUT =  typeof process.env.TIMEOUT !== "undefined"?parseInt(process.env.TIMEOUT):2000;
+const TIMEOUT =  typeof process.env.TIMEOUT !== "undefined"?parseInt(process.env.TIMEOUT):10000;
 const TEST_PORT =  typeof process.env.TEST_PORT !== "undefined"?parseInt(process.env.TEST_PORT):3001;
 
 const SEQUELIZE_CMD =  typeof process.env.SEQUELIZE_CMD !== "undefined"?process.env.SEQUELIZE_CMD:"npx sequelize";
@@ -110,10 +110,10 @@ function comprueba(msg, score, func) {
                 this.msg_err =  `Ha habido un fallo: ${e.message}`;
             }
             if (critical) {
-                console.log('Se ha producido un error crítico, se cancelan el resto de tests.')
+                console.log('Se ha producido un error crítico, se cancelan el resto de tests.');
                 error_critical = this.msg_err;
+                throw(e);
             }
-            throw(e);
         }
     });
 };
@@ -283,16 +283,26 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                     console.log('\t\tError en el servidor: ', data.toString()); 
                 });
 
-                await new Promise(resolve => setTimeout(resolve, TIMEOUT));
-
-                // The exit code should be null while the server is running
-                if(server.exitCode) {
-                    throw Error("El servidor se ha parado.");
-                }
-
                 browser.site = `http://localhost:${TEST_PORT}/`;
-                await browser.visit("/");
-                browser.assert.status(200);
+                const steps = 100;
+                for(var i=0; i<(TIMEOUT/steps); i++) {
+                    await new Promise(resolve => setTimeout(resolve, steps));
+
+                    // The exit code should be null while the server is running
+                    if(server.exitCode) {
+                        throw Error("El servidor se ha parado.");
+                    }
+
+                    try{
+                        await browser.visit("/");
+                        browser.assert.status(200);
+                        return;
+                    }
+                    catch(e){
+                        log(`No se ha podido contactar con al servidor en ${browser.site}. Reintentando`);
+                    }
+                }
+                throw Error(`No se ha podido contactar con el servidor en: ${browser.site}`);
 
             } catch(e) {
                 console.log('Error en setup: ', err);
@@ -419,7 +429,7 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                               await browser.pressButton('Save');
                               browser.assert.status(200);
                           });
-                      })
+                      });
 
             comprueba(`Se muestra ${titulo_test} correctamente a los usuarios logueados`,
                       3,

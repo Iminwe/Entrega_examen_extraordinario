@@ -40,7 +40,7 @@ Una vez clonado el repositorio, ha de instalar las dependencias necesarias para 
 Debe lanzar el autocorrector.
 Al lanzar el autocorrector, el comando le pedirá su correo de alumnos UPM.
 Es muy importante que escriba su dirección de correo correctamente y **elija la opción de almacenar los datos en el fichero `user.json`**.
-En caso contrario, no se mostrará el enunciado.
+En caso contrario, no se mostrará el enunciado correcto.
 
 ```
 npx autocorector
@@ -67,3 +67,31 @@ El autocorector puede ejecutarse todas la veces que se desee.
 
 **MUY IMPORTANTE**: El autocorector debe ejecutarse siempre para que la práctica se suba a moodle, aunque no funcionen las modificaciones o no se hayan terminado completamente.
 Si no se ejecuta el autocorector, el examen se suspende automáticamente.
+
+
+
+## Preguntas y fallos frecuentes
+
+### Me he equivocado al escribir mi dirección. ¿Cómo puedo cambiarla?
+
+Simplemente cierra el fichero `Enunciado.pdf`, borra el fichero `user.json` y vuelve a lanzar el autocorector.
+
+
+### ¿Qué significa DEBUG=1?, ¿por qué debo hacerlo?
+
+Se trata de una variable de entorno que podemos utilizar para pedirle al autocorector que nos muestre más información en la salida.
+
+En Linux y macOS se puede cambiar su valor así
+```
+DEBUG=1
+```
+
+En Windows:
+
+```
+set DEBUG=1
+```
+
+Una vez cambiado el valor, vuelve a ejecutar el autocorector.
+
+Una vez se resuelva tu problema, puedes volver a poner el valor `DEBUG=0` de la misma forma.
