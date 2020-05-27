@@ -1,6 +1,6 @@
 {
   "name": "quiz-examen-2020",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
@@ -45,5 +45,6 @@
     "serverUrl": "https://autocorector.dit.upm.es/",
     "courseId": "8249",
     "assignmentId": "83669"
-  }
+  },
+  "engines" : { "node" : ">=12 <=13" }
 }

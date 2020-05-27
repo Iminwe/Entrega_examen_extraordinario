@@ -5,8 +5,10 @@ var {modelo, config} = require('./configuration');
 
 const path = require("path");
 const Utils = require("./testutils");
-const spawn = require("child_process").spawn;
 const fs = require("fs");
+const util = require("util");
+const {spawn} = require("child_process");
+const exec = util.promisify(require('child_process').exec);
 
 const process = require("process");
 
@@ -77,8 +79,6 @@ function soloPara(filtro, func) {
         func();
     }
 }
-
-console.log('Modelo actual:', modelo);
 
 function comprueba(msg, score, func) {
     msg = `${num_tests}: ${msg}`;
@@ -169,299 +169,6 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
 
     });
 
-    // Guardar tests para el futuro
-    // Equivalente a comentarlos :)
-    soloPara([], function() {
-
-        comprueba(`Comprobar que la migración y el seeder existen`,
-                  -1,
-                  async function () {
-
-                      let files = [
-                          ['migrations', '-CreateGroupsTable.js'],
-                          ['migrations', '-CreateGroupQuizzesTable.js'],
-                          ['seeders', '-FillGroupsTable.js'],
-                      ];
-                      for (var [folder, suffix] of files) {
-                          this.msg_err = `La carpeta ${folder} no tiene un fichero acabado en ${suffix}`;
-                          let file = fs.readdirSync(path.join(path_assignment, folder)).filter(fn => fn.endsWith(suffix));
-                          (file.length).should.be.equal(1);
-                      }
-                  });
-
-        comprueba(`Comprobar que los controladores existen`,
-                  -1,
-                  async function () {
-                      this.msg_err = "No se incluye el controlador de groups";
-
-                      let quiz = require(path.resolve(path.join(path_assignment, 'controllers', 'group')));
-                      quiz.index.should.not.be.undefined;
-                  })
-        comprueba(`Comprobar que las plantillas express-partials tienen los componentes adecuados`,
-                  0,
-                  async function () {
-                      this.msg_err = 'No se ha encontrado todos los elementos necesarios. Revisa las plantillas.';
-                      let checks = {
-                          "views/layout.ejs": {
-                              true: [/<%- body %>/g, /<header/, /<\/header>/, /<nav/, /<\/nav>/, /<footer/, /<\/footer>/]
-                          },
-                          [path.join("views", "groups", "index.ejs")]: {
-                              true: [/<h1>[ \n\t\r^M]*Groups:[ \n\t\r^M]*<\/h1>/],
-                          },
-                          [path.join("views", "groups", "edit.ejs")]: {
-                              true: [/Configure Group/],
-                          },
-                          [path.join("views", "groups", "new.ejs")]: {
-                              true: [/<form method="post" action="\/groups">/]
-                          },
-                          [path.join("views", "groups", "random_play.ejs")]: {
-                              true: [/Group Play/],
-                          },
-                          [path.join("views", "groups", "random_nomore.ejs")]: {
-                              true: [/End of Group Play/],
-                          },
-                          [path.join("views", "groups", "random_result.ejs")]: {
-                              true: [/You have succeeded/, /You have failed/],
-                          },
-                      };
-
-                      for (let fpath in checks) {
-                          try{
-                              comprueba_fichero(fpath, checks[fpath]['true'], checks[fpath]['false']);
-                          }catch(e){
-                              this.msg_err = e.message;
-                              throw e;
-                          }
-                      }
-                  });
-            comprueba("La lista de grupos incluye un enlace para jugar",
-                      1,
-                      async function(){ 
-                          await browser.visit("/groups/");
-                          browser.assert.status(200);
-                          this.msg_err = "No se muestra enlace para Geography";
-                          browser.assert.text('a[href="/groups/1/randomplay"]', "Geography");
-                          this.msg_err = "No se muestra enlace para Math";
-                          browser.assert.text('a[href="/groups/2/randomplay"]', "Math");
-                      });
-
-            comprueba("Los quizzes se eligen aleatoriamente",
-                      1,
-                      async function () {
-                          // Lanzamos 10 intentos de partida, sin cookies. Debería haber más de 2 preguntas diferentes
-                          this.msg_err = `Se repite el orden de los quizzes`;
-
-                          let visited = {};
-                          let num = 0;
-
-                          for(var i=0; i<10; i++) {
-                              await browser.visit("/groups/1/randomplay");
-                              browser.assert.status(200);
-                              let att = browser.query('form');
-                              if(!visited[att.action]) {
-                                  visited[att.action] = 1;
-                                  num++;
-                              } else {
-                                  visited[att.action]++;
-                              }
-                              browser.deleteCookies();
-                          }
-
-                          num.should.be.above(1);
-                      });
-
-            comprueba("No se repiten los quizzes",
-                      1,
-                      async function () {
-                          // Hacer dos partidas, comprobar que el orden de las preguntas es diferente
-
-                          let visited = {};
-                          browser.deleteCookies();
-
-
-                          for (var group in groups) {
-                              for(var i=0; i<groups[group].length; i++) {
-                                  this.msg_err = `Error al intentar jugar en el grupo ${group}`;
-                                  let url = `/groups/${group}/randomplay`;
-                                  await browser.visit(url);
-                                  browser.assert.status(200);
-                                  let att = browser.query('form');
-                                  if(!visited[att.action]) {
-                                      visited[att.action] = 1;
-                                  } else{
-                                      this.msg_err = `Quiz repetido: ${att.action}`;
-                                      throw Error(this.msg_err);
-                                      visited[att.action]++;
-                                  }
-                                  let tokens = att.action.split("/");
-                                  let id = parseInt(tokens[tokens.length-1]);
-                                  let q = questions[id-1];
-                                  let answer = q.answer;
-                                  url = `/groups/${group}/randomcheck/${id}?answer=${answer}`;
-                                  await browser.visit(url);
-                              }
-                          }
-                      });
-
-            comprueba("Se termina si no quedan más quizzes",
-                      1,
-                      async function () {
-                          this.msg_err = "Se han respondido todas las preguntas, pero el juego continúa";
-
-                          await browser.visit(`/groups/2/randomplay`); // TODO: Actualizar si se meten más grupos, o usar el diccionario.
-                          browser.assert.text("section>h1", "End of Group Play: Math");
-                      });
-
-            comprueba("Si se responde bien, continúa el juego",
-                      1,
-                      async function () {
-                          browser.deleteCookies();
-
-                          for(var i=0; i< 10; i++) {
-                              await browser.visit("/groups/1/randomplay");
-                              browser.assert.status(200);
-                              let att = browser.query('form');
-                              let tokens = att.action.split("/");
-                              const id = parseInt(tokens[tokens.length-1]);
-                              let question = questions[id-1];
-                              let answer = question.answer;
-                              await browser.visit(`/groups/1/randomcheck/${id}?answer=${answer}`);
-                              this.msg_err = `No acepta la respuesta correcta para ${question}`;
-                              browser.assert.status(200);
-                              this.msg_err = `Se acepta la respuesta, pero hay un error al continuar`;
-                              await browser.visit("/groups/1/randomplay");
-                              att = browser.query('form');
-                              tokens = att.action.split("/");
-                              let new_id = parseInt(tokens[tokens.length-1]);
-                              this.msg_err = "Se repite la pregunta";
-                              id.should.not.be.equal(new_id);
-                              browser.deleteCookies();
-                          }
-                      });
-
-            comprueba("Al fallar se termina el juego",
-                      1,
-                      async function () {
-                          this.msg_err = "Al fallar hay un error";
-
-                          browser.deleteCookies();
-                          await browser.visit("/groups/1/randomplay");
-                          browser.assert.status(200);
-                          await browser.visit("/groups/1/randomcheck/1?answer=This answer is wrong");
-                          browser.assert.status(200);
-
-                          this.msg_err = "Al fallar una pregunta no muestra la pantalla correcta";
-                          browser.assert.text("section>h1", "Group Play: Geography");
-                          browser.text().includes("You have failed").should.equal(true);
-                      });
-
-            comprueba("Se puntúa bien el número de aciertos",
-                      1,
-                      async function () {
-
-                          // Repetimos dos veces, para asegurarnos.
-                          for(var j=0; j<2; j++){
-                              browser.deleteCookies();
-                              for(var i=0; i< groups["1"].length; i++) {
-                                  this.msg_err = "Hay un error con la petición a randomplay";
-                                  await browser.visit("/groups/1/randomplay");
-                                  browser.assert.status(200);
-                                  let att = browser.query('form');
-                                  let tokens = att.action.split("/");
-                                  const id = parseInt(tokens[tokens.length-1]);
-                                  let question = questions[id-1];
-                                  let answer = question.answer;
-                                  this.msg_err = `No acepta la respuesta correcta para ${question}`;
-                                  await browser.visit(`/groups/1/randomcheck/${id}?answer=${answer}`);
-                                  browser.assert.status(200);
-                                  const body = browser.text();
-                                  let expected = `Successful answers = ${i+1}`;
-                                  this.msg_err = `No se muestra el número de aciertos correctamente. Esperaba encontrar: ${expected}`;
-                                  body.includes(expected).should.equal(true);
-                              }
-                          }
-                      });
-
-
-            comprueba("La lista de grupos sólo muestra opciones de edición al admin",
-                      0.75,
-                      async function() {
-                          var ctx = this;
-                          return allUsers(async function(user) {
-                              await browser.visit("/groups");
-                              ctx.msg_err = `El usuario ${user.username} no puede ver la lista de grupos correctamente`;
-                              browser.assert.text("#mainHeader > div.right > a:nth-child(1)", user.username);
-                              let expected = user.admin? 1 : 0;
-                              ctx.msg_err = `El usuario ${user.username} ${user.admin?'sí':'no'} debería poder editar`;
-                              browser.assert.elements('a[href="/groups/1/edit"]', expected);
-                              browser.assert.elements('a[href="/groups/1?_method=DELETE"]', expected);
-                          });
-                      });
-
-            comprueba("Sólo un admin puede crear nuevos grupos",
-                      0.75,
-                      async function() {
-                          var ctx = this;
-                          return allUsers(async function(user) {
-                              try{
-                                  await browser.visit("/groups/new");
-                              } catch(e){}
-
-                              ctx.msg_err = `El usuario ${user.username} ${user.admin?'sí':'no'} debería poder crear nuevos grupos`;
-
-                              if(!user.admin) {
-                                  browser.assert.status(403);
-                                  return;
-                              }
-                              browser.assert.status(200);
-
-                              await browser.fill('name', `prueba_${user.username}`);
-                              await browser.pressButton('Save');
-                              browser.assert.status(200);
-                          });
-                      });
-
-            comprueba("Sólo un admin puede editar un grupo",
-                      0.75,
-                      async function() {
-                          var ctx = this;
-                          return allUsers(async function(user) {
-                              try{
-                                  await browser.visit("/groups/1/edit");
-                              } catch(e){}
-
-                              ctx.msg_err = `El usuario ${user.username} ${user.admin?'sí':'no'} debería poder editar grupos`;
-
-                              if(!user.admin) {
-                                  browser.assert.status(403);
-                                  return;
-                              }
-                              browser.assert.status(200);
-                              await browser.pressButton('Save');
-                              browser.assert.status(200);
-                          });
-                      });
-
-            comprueba("Sólo un admin puede eliminar un grupo",
-                      0.75,
-                      async function() {
-                          var ctx = this;
-                          return allUsers(async function(user) {
-                              try{
-                                  await browser.visit("/groups/1/?_method=DELETE");
-                              } catch(e){}
-
-                              ctx.msg_err = `El usuario ${user.username} ${user.admin?'sí':'no'} debería poder eliminar grupos`;
-
-                              if(!user.admin) {
-                                  browser.assert.status(403);
-                                  return;
-                              }
-
-                              browser.assert.status(200);
-                          });
-                      });
-    });
 
     describe("Funcionales", function(){
 
@@ -541,16 +248,26 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                 fs.closeSync(fs.openSync(db_file, 'w'));
 
                 err = "No hemos podido lanzar las migraciones";
-                await exec(`${SEQUELIZE_CMD} db:migrate --url "sqlite://${db_file}" --migrations-path ${path.join(path_assignment, "migrations")}`);
+                let res = await exec(`${SEQUELIZE_CMD} db:migrate --url="sqlite://${db_file}" --migrations-path='${path.join(path_assignment, "migrations")}'`);
+                if(res.stderr != "") {
+                    throw Error(`Error en migraciones: ${res.stderr}`);
+                }
+                log('Lanzadas migraciones')
                 err = "No hemos podido lanzar las seeds";
-                await exec(`${SEQUELIZE_CMD} db:seed:all --url "sqlite://${db_file}" --seeders-path ${path.join(path_assignment, "seeders")}`);
+                res = await exec(`${SEQUELIZE_CMD} db:seed:all --url="sqlite://${db_file}" --seeders-path='${path.join(path_assignment, "seeders")}'`);
+                if(res.stderr != "") {
+                    throw Error(`Error en seeders: ${res.stderr}`);
+                }
+                log('Lanzados seeders');
 
                 let bin_path = path.join(path_assignment, "bin", "www");
 
+                log(`Usando la base de datos ${db_file}`);
                 err = `Parece que no se puede lanzar el servidor con el comando "node ${bin_path}".`;
                 server = spawn('node', [bin_path], {env: {PORT: TEST_PORT,
-                                                          DATABASE_URL: `sqlite://${db_file}`,
+                                                          DATABASE_URL: `sqlite://${path.relative(process.cwd(), db_file)}`,
                                                           MODEL_CONFIG: process.env.MODEL_CONFIG,
+                                                          NODE_ENV: 'development',
                                                          }
                                                    });
 
@@ -578,7 +295,7 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                 browser.assert.status(200);
 
             } catch(e) {
-                console.log(err);
+                console.log('Error en setup: ', err);
                 console.log();
                 console.log('Este es un error crítico, así que no podemos realizar el resto de tests.');
                 console.log();
@@ -592,36 +309,45 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
         });
 
         soloPara(["Modelo-1", "Modelo-2", "Modelo-3", "Modelo-4", "Modelo-5"], function() {
-            let layoutButtonTitle = new RegExp(config.layoutButtonTitle);
-            let requestPath = new RegExp(config.requestPath);
-            let middlewareName = new RegExp(config.middlewareName);
-            let viewTitle = new RegExp(config.viewTitle);
 
             let incluyeLogueado = false;
 
-            // comprueba(`La plantilla views/layout.ejs contiene el botón adecuado`,
-            //           1,
-            //           async function () {
-            //               comprueba_fichero('views/layout.ejs', [requestPath, layoutButtonTitle ]);
-            //           });
-
-
-           // comprueba("El fichero de rutas incluye la función contar",
-           //           1,
-           //           async function() {
-           //               comprueba_fichero('routes/index.js', [requestPath, middlewareName]);
-           //           });
-
-           // comprueba(`El fichero de controladores incluye la función para contar`,
-           //           1,
-           //           async function() {
-           //               comprueba_fichero('controllers/quiz.js', [/models.Quiz.count/]);
-           //           });
-           // comprueba("Se incluye la vista adecuada",
-           //           1,
-           //           async function() {
-           //               comprueba_fichero(`views/quizzes/examen.ejs`, [/h1/, viewTitle]);
-           //           });
+            let viewTitle = "";
+            let viewContent = "";
+            let pre_content = "";
+            let post_content = "";
+            let titulo_test = "";
+            switch(modelo) {
+            case "Modelo-1":
+                titulo_test = "la cuenta de quizzes totales";
+                pre_content = "Hay 4 quizzes";
+                post_content = "Hay 5 quizzes";
+                break;
+            case "Modelo-2":
+                titulo_test = "la cuenta de usuarios totales";
+                pre_content = "Hay 2 usuarios";
+                post_content = "Hay 3 usuarios";
+                break;
+            case "Modelo-3":
+                titulo_test = "la cuenta de quizzes borrados";
+                pre_content = "Se han borrado 4 quizzes";
+                post_content = "Se han borrado 1 quizzes";
+                // code block
+                break;
+            case "Modelo-4":
+                titulo_test = "la cuenta de ceros borrados";
+                pre_content = "Se han borrado 0 ceros";
+                post_content = "Se han borrado 1 ceros";
+                // code block
+                break;
+            case "Modelo-5":
+                titulo_test = "la cuenta de quizzes creados";
+                pre_content = "He creado 0 quizzes";
+                post_content = "He creado 1 quizzes";
+                // code block
+                break;
+            default:
+            }
 
 
             comprueba(`La página principal incluye un enlace para ${config.middlewareName} si estás logueado`,
@@ -639,7 +365,7 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                       });
 
             comprueba(`La página principal no incluye un enlace para ${config.middlewareName} si no estás logueado`,
-                      1,
+                      2,
                       async function(){ 
                           if(!incluyeLogueado) {
                                 throw Error( "Para que este test pueda aplicarse, primero ha de mostrarse el enlace a usuarios logueados.")
@@ -668,10 +394,46 @@ Cuando preguntes en el foro, asegúrate de incluir esa información para que pod
                           await asUser('pepe', async function() {
                               await browser.visit(config.requestPath);
                               browser.assert.status(200);
+                              viewTitle = browser.text("section>h1");
+                              viewContent = browser.text("section>p");
+
                           });
                       });
 
 
+            comprueba(`Se puede añadir un usuario y una pregunta`,
+                      0,
+                      async function() {
+                          await asUser('pepe', async function() {
+                              await browser.visit('/quizzes/new/');
+                              await browser.fill('question', 'prueba2');
+                              await browser.fill('answer', '0');
+                              await browser.pressButton('Save');
+                              browser.assert.status(200);
+                          });
+                          await asUser('admin', async function() {
+                              await browser.visit('/users/new/');
+                              await browser.fill('username', 'guest');
+                              await browser.fill('password', '0000');
+                              await browser.fill('#user_confirm_password', '0000');
+                              await browser.pressButton('Save');
+                              browser.assert.status(200);
+                          });
+                      })
+
+            comprueba(`Se muestra ${titulo_test} correctamente a los usuarios logueados`,
+                      3,
+                      async function(){ 
+                          if(viewContent != pre_content){
+                              throw Error(`Se esperaba ${pre_content} y se obtuvo ${viewContent}`);
+                          }
+                          await asUser('pepe', async function() {
+                              await browser.visit(config.requestPath);
+                              browser.assert.status(200);
+                              browser.assert.text("section>h1", config.viewTitle);
+                              browser.assert.text("section>p", post_content);
+                          });
+                      });
         });
 
     });
