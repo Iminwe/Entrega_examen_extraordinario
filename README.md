@@ -44,6 +44,9 @@ En el enlace **https://www.npmjs.com/package/autocorector** se proveen instrucci
 Es muy importante que escriba su dirección de correo correctamente y **elija la opción de almacenar los datos en el fichero `user.json`**.
 En caso contrario, no se mostrará el enunciado correcto.
 
+
+**MUY IMPORTANTE**: Debe utilizar el token del servicio **"AutoCorrección"**, no el token "Moodle Mobile Web Services" empleado en las prácticas.
+
 ```
 npx autocorector
 ```
