@@ -107,7 +107,7 @@ function comprueba(msg, score, func) {
             log("Exception in test:", e);
             error_any = true;
             if (!this.msg_err){
-                this.msg_err =  `Ha habido un fallo: ${e.message}`;
+                this.msg_err = e.message;
             }
             if (critical) {
                 console.log('Se ha producido un error crítico, se cancelan el resto de tests.');
@@ -300,7 +300,7 @@ describe("Tests examen", async function() {
                 console.log();
                 console.log('Este es un error crítico, así que no podemos realizar el resto de tests.');
                 console.log();
-                log(e);
+                console.log(e);
                 error_critical = err;
             }
         });
@@ -426,12 +426,15 @@ describe("Tests examen", async function() {
                       3,
                       async function(){ 
                           if(viewContent != pre_content){
-                              throw Error(`Se esperaba ${pre_content} y se obtuvo ${viewContent}`);
+                              throw Error(`Se esperaba "${pre_content}" y se obtuvo "${viewContent}"`);
                           }
                           await asUser('pepe', async function() {
+                              this.msg_err = `No se puede acceder a ${config.requestPath}`;
                               await browser.visit(config.requestPath);
                               browser.assert.status(200);
+                              this.msg_err = `El título h1 no es el adecuado, debería ser "${config.viewTitle}"`;
                               browser.assert.text("section>h1", config.viewTitle);
+                              this.msg_err = `Se esperaba "${pre_content}" y se obtuvo "${viewContent}"`;
                               browser.assert.text("section>p", post_content);
                           });
                       });
