@@ -1,6 +1,6 @@
 {
   "name": "quiz-examen-2020",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
@@ -41,10 +41,10 @@
     "zombie": "^6.1.4"
   },
   "info": {
-    "githubURL": "CORE-2020/Entrega_examen",
+    "githubURL": "CORE-2020/Entrega_examen_extraordinario",
     "serverUrl": "http://ec2-35-180-205-79.eu-west-3.compute.amazonaws.com/",
     "courseId": "8249",
-    "assignmentId": "83669"
+    "assignmentId": "88504"
   },
   "engines" : { "node" : ">=12 <=13" }
 }
