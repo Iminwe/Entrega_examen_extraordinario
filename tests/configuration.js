@@ -48,7 +48,7 @@ let modelos = read_models();
 
 
 function model_for_user (email) {
-    var id = 0;
+    var id = 2;
     for(const ix in email){
         id += 1;
         id += email.charCodeAt(ix);
