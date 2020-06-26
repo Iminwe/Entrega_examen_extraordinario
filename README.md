@@ -14,9 +14,9 @@ Es necesario tener node.js (v12), npm, y Git instalados, además del paquete aut
 
 ## Paso 1
 
-Para hacer el examen, el alumno debe clonar el repositorio `Entrega_examen` desde la siquiente URL:
+Para hacer el examen, el alumno debe clonar el repositorio `Entrega_examen_extraordinario` desde la siquiente URL:
 
-     https://github.com/CORE-2020/Entrega_examen
+     https://github.com/CORE-2020/Entrega_examen_extraordinario
 
 Este repositorio contiene un autocorector del examen y una versión del proyecto Quiz 2020.
 
@@ -24,7 +24,7 @@ Este repositorio contiene un autocorector del examen y una versión del proyecto
 Para clonar el repositorio, puede utilizar el siguiente comando:
 
 ```
-git clone https://github.com/CORE-2020/Entrega_examen
+git clone https://github.com/CORE-2020/Entrega_examen_extraordinario
 ```
 
 
@@ -32,7 +32,7 @@ git clone https://github.com/CORE-2020/Entrega_examen
 
 Una vez clonado el repositorio, ha de instalar las dependencias necesarias para el autocorector. Para ello debe ejecutar los comandos:
 
-    cd Entrega_examen
+    cd Entrega_examen_extraordinario
     npm install
 
 
