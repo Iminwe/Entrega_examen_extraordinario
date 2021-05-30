@@ -233,3 +233,12 @@ exports.destroy = async (req, res, next) => {
             answer
         });
     };
+
+    exports.contar = async (req, res, next) => {
+
+        // If there exists "req.loginUser"
+        if (req.loginUser) {
+            total = await models.Quiz.count();
+            res.render ('quizzes/examen', {total});
+        };
+    };
